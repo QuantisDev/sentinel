@@ -3,25 +3,25 @@
 """
 import sys
 import os
-from dash_config import DashConfig
+import energi_config
 
 default_sentinel_config = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '../sentinel.conf')
 )
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
-sentinel_cfg = DashConfig.tokenize(sentinel_config_file)
+sentinel_cfg = energi_config.EnergiConfig.tokenize(sentinel_config_file)
 
 
-def get_dash_conf():
+def get_energi_conf():
     home = os.environ.get('HOME')
 
-    dash_conf = os.path.join(home, ".dashcore/dash.conf")
+    energi_conf = os.path.join(home, ".energicore/energi.conf")
     if sys.platform == 'darwin':
-        dash_conf = os.path.join(home, "Library/Application Support/DashCore/dash.conf")
+        energi_conf = os.path.join(home, "Library/Application Support/EnergiCore/energi.conf")
 
-    dash_conf = sentinel_cfg.get('dash_conf', dash_conf)
+    energi_conf = sentinel_cfg.get('energi_conf', energi_conf)
 
-    return dash_conf
+    return energi_conf
 
 
 def get_network():
@@ -77,6 +77,6 @@ def get_db_conn():
     return db
 
 
-dash_conf = get_dash_conf()
+energi_conf = get_energi_conf()
 network = get_network()
 db = get_db_conn()

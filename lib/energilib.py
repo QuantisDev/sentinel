@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 import base58
@@ -9,17 +10,17 @@ from decimal import Decimal
 import simplejson
 import binascii
 from misc import printdbg, epoch2str
-import time
 
 
-def is_valid_dash_address(address, network='mainnet'):
+def is_valid_energi_address(address, network='mainnet'):
     # Only public key addresses are allowed
     # A valid address is a RIPEMD-160 hash which contains 20 bytes
     # Prior to base58 encoding 1 version byte is prepended and
     # 4 checksum bytes are appended so the total number of
     # base58 encoded bytes should be 25.  This means the number of characters
     # in the encoding should be about 34 ( 25 * log2( 256 ) / log2( 58 ) ).
-    dash_version = 140 if network == 'testnet' else 76
+    # TODO: might need to modify
+    energi_version = 140 if network == 'testnet' else 76
 
     # Check length (This is important because the base58 library has problems
     # with long addresses (which are invalid anyway).
@@ -28,15 +29,15 @@ def is_valid_dash_address(address, network='mainnet'):
 
     address_version = None
 
-    try:
-        decoded = base58.b58decode_chk(address)
-        address_version = ord(decoded[0:1])
-    except:
-        # rescue from exception, not a valid Dash address
-        return False
+    # try:
+    #     decoded = base58.b58decode_chk(address)
+    #     address_version = ord(decoded[0:1])
+    # except:
+    #     # rescue from exception, not a valid Energi address
+    #     return False
 
-    if (address_version != dash_version):
-        return False
+    # if (address_version != energi_version):
+    #     return False
 
     return True
 
@@ -87,7 +88,7 @@ def parse_masternode_status_vin(status_vin_string):
 
 
 def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time):
-    from models import Superblock, GovernanceObject, Proposal
+    from models import Superblock
 
     # don't create an empty superblock
     if (len(proposals) == 0):
@@ -172,45 +173,43 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time):
     return sb
 
 
-# shims 'til we can fix the dashd side
-def SHIM_serialise_for_dashd(sentinel_hex):
-    from models import DASHD_GOVOBJ_TYPES
+# shims 'til we can fix the energid side
+def SHIM_serialise_for_energid(sentinel_hex):
+    from models import ENERGID_GOVOBJ_TYPES
     # unpack
     obj = deserialise(sentinel_hex)
 
-    # shim for dashd
+    # shim for energid
     govtype = obj[0]
 
     # add 'type' attribute
-    obj[1]['type'] = DASHD_GOVOBJ_TYPES[govtype]
+    obj[1]['type'] = ENERGID_GOVOBJ_TYPES[govtype]
 
-    # superblock => "trigger" in dashd
+    # superblock => "trigger" in energid
     if govtype == 'superblock':
         obj[0] = 'trigger'
 
-    # dashd expects an array (even though there is only a 1:1 relationship between govobj->class)
+    # energid expects an array (even though there is only a 1:1 relationship between govobj->class)
     obj = [obj]
 
     # re-pack
-    dashd_hex = serialise(obj)
-    return dashd_hex
+    energid_hex = serialise(obj)
+    return energid_hex
 
 
-# shims 'til we can fix the dashd side
-def SHIM_deserialise_from_dashd(dashd_hex):
-    from models import DASHD_GOVOBJ_TYPES
-
+# shims 'til we can fix the energid side
+def SHIM_deserialise_from_energid(energid_hex):
     # unpack
-    obj = deserialise(dashd_hex)
+    obj = deserialise(energid_hex)
 
-    # shim from dashd
+    # shim from energid
     # only one element in the array...
     obj = obj[0]
 
     # extract the govobj type
     govtype = obj[0]
 
-    # superblock => "trigger" in dashd
+    # superblock => "trigger" in energid
     if govtype == 'trigger':
         obj[0] = govtype = 'superblock'
 
@@ -244,7 +243,7 @@ def did_we_vote(output):
     err_msg = ''
 
     try:
-        detail = output.get('detail').get('dash.conf')
+        detail = output.get('detail').get('energi.conf')
         result = detail.get('result')
         if 'errorMessage' in detail:
             err_msg = detail.get('errorMessage')
