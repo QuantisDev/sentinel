@@ -34,8 +34,7 @@ class EnergiConfig():
         creds = {key: value for (key, value) in match}
 
         # standard Energi defaults...
-        # TODO: change for energi
-        default_port = 9998 if (network == 'mainnet') else 19998
+        default_port = 9796 if (network == 'mainnet') else 19796
 
         # use default port for network if not specified in energi.conf
         if not ('port' in creds):
