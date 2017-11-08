@@ -161,7 +161,7 @@ class GovernanceObject(BaseModel):
         return cmd
 
     def vote(self, energid, signal, outcome):
-        import lib.energilib as egilib
+        import energilib as egilib
 
         # At this point, will probably never reach here. But doesn't hurt to
         # have an extra check just in case objects get out of sync (people will
@@ -262,7 +262,7 @@ class Proposal(GovernanceClass, BaseModel):
         db_table = 'proposals'
 
     def is_valid(self):
-        import lib.energilib as egilib
+        import energilib as egilib
 
         printdbg("In Proposal#is_valid, for Proposal: %s" % self.__dict__)
 
