@@ -59,7 +59,7 @@ class GovernanceClass(object):
         return {self.object_hash: dikt}
 
     def get_submit_command(self):
-        import lib.energilib as egilib
+        import energilib as egilib
         obj_data = egilib.SHIM_serialise_for_energid(self.serialise())
 
         # new objects won't have parent_hash, revision, etc...
