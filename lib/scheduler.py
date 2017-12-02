@@ -1,10 +1,9 @@
 import sys
 import os
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib')))
-import init
+
 import misc
 from models import Transient
-from misc import printdbg
 import time
 import random
 
@@ -18,8 +17,8 @@ class Scheduler(object):
         next_run_time = Transient.get(self.transient_key_scheduled) or 0
         now = misc.now()
 
-        printdbg("current_time = %d" % now)
-        printdbg("next_run_time = %d" % next_run_time)
+        misc.printdbg("current_time = %d" % now)
+        misc.printdbg("next_run_time = %d" % next_run_time)
 
         return now >= next_run_time
 
@@ -33,7 +32,7 @@ class Scheduler(object):
             random_interval = self.random_interval_max
 
         next_run_at = misc.now() + random.randint(1, random_interval)
-        printdbg("scheduling next sentinel run for %d" % next_run_at)
+        misc.printdbg("scheduling next sentinel run for %d" % next_run_at)
         Transient.set(self.transient_key_scheduled, next_run_at,
                       next_run_at)
 
@@ -46,5 +45,5 @@ class Scheduler(object):
         # in case an int > 60 given as argument
         delay_in_seconds = delay_in_seconds % 60
 
-        printdbg("Delay of [%d] seconds for cron minute offset" % delay_in_seconds)
+        misc.printdbg("Delay of [%d] seconds for cron minute offset" % delay_in_seconds)
         time.sleep(delay_in_seconds)
