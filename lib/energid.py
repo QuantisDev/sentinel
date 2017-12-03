@@ -201,7 +201,7 @@ class EnergiDaemon():
         return (self.MASTERNODE_WATCHDOG_MAX_SECONDS // 2)
 
     def estimate_block_time(self, height):
-        import dashlib
+        import energilib
         """
         Called by block_height_to_epoch if block height is in the future.
         Call `block_height_to_epoch` instead of this method.
@@ -214,7 +214,7 @@ class EnergiDaemon():
         if (diff < 0):
             raise Exception("Oh Noes.")
 
-        future_seconds = dashlib.blocks_to_seconds(diff)
+        future_seconds = energilib.blocks_to_seconds(diff)
         estimated_epoch = int(time.time() + future_seconds)
 
         return estimated_epoch
@@ -242,7 +242,7 @@ class EnergiDaemon():
     @property
     def has_sentinel_ping(self):
         getinfo = self.rpc_command('getinfo')
-        return (getinfo['protocolversion'] >= config.min_dashd_proto_version_with_sentinel_ping)
+        return (getinfo['protocolversion'] >= config.min_energid_proto_version_with_sentinel_ping)
 
     def ping(self):
         self.rpc_command('sentinelping', config.sentinel_version)

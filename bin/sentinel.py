@@ -5,7 +5,7 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib
 import init
 import config
 import misc
-from dashd import DashDaemon
+from energid import EnergiDaemon
 from models import Superblock, Proposal, GovernanceObject, Watchdog
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
@@ -60,17 +60,17 @@ def watchdog_check(energid):
     printdbg("leaving watchdog_check")
 
 
-def prune_expired_proposals(dashd):
+def prune_expired_proposals(energid):
     # vote delete for old proposals
-    for proposal in Proposal.expired(dashd.superblockcycle()):
-        proposal.vote(dashd, VoteSignals.delete, VoteOutcomes.yes)
+    for proposal in Proposal.expired(energid.superblockcycle()):
+        proposal.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping dashd
-def sentinel_ping(dashd):
+# ping energid
+def sentinel_ping(energid):
     printdbg("in sentinel_ping")
 
-    dashd.ping()
+    energid.ping()
 
     printdbg("leaving sentinel_ping")
 
