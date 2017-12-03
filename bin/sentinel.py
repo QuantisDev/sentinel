@@ -5,7 +5,7 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib
 import init
 import config
 import misc
-from energid import EnergiDaemon
+from dashd import DashDaemon
 from models import Superblock, Proposal, GovernanceObject, Watchdog
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
@@ -59,6 +59,20 @@ def watchdog_check(energid):
 
     printdbg("leaving watchdog_check")
 
+
+def prune_expired_proposals(dashd):
+    # vote delete for old proposals
+    for proposal in Proposal.expired(dashd.superblockcycle()):
+        proposal.vote(dashd, VoteSignals.delete, VoteOutcomes.yes)
+
+
+# ping dashd
+def sentinel_ping(dashd):
+    printdbg("in sentinel_ping")
+
+    dashd.ping()
+
+    printdbg("leaving sentinel_ping")
 
 def attempt_superblock_creation(energid):
     import energilib
@@ -190,11 +204,17 @@ def main():
     # load "gobject list" rpc command data, sync objects into internal database
     perform_energid_object_sync(energid)
 
-    # delete old watchdog objects, create a new if necessary
-    watchdog_check(energid)
+    if energid.has_sentinel_ping:
+        sentinel_ping(energid)
+    else:
+        # delete old watchdog objects, create a new if necessary
+        watchdog_check(energid)
 
     # auto vote network objects as valid/invalid
     # check_object_validity(energid)
+
+    # vote to delete expired proposals
+    prune_expired_proposals(energid)
 
     # create a Superblock if necessary
     attempt_superblock_creation(energid)
