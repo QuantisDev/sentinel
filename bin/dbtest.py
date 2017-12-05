@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib')))
 import config
 from models import Superblock, Proposal, GovernanceObject, Setting, Signal, Vote, Outcome, Watchdog
-dashd = DashDaemon.from_energi_conf(config.energi_conf)
+dashd = EnergiDaemon.from_energi_conf(config.energi_conf)
 import misc
 # ==============================================================================
 # do stuff here
