@@ -34,7 +34,7 @@ class EnergiConfig():
         creds = {key: value for (key, value) in match}
 
         # standard Energi defaults, to accomodate all three networks (mainnet, testnet and testnet60x)
-        default_port = 9796 if (network == 'mainnet') else 19796 if (network == 'testnet') else 19766
+        default_port = 9796 if (network == 'mainnet') else 19796 if (network == 'testnet') else 29796 if (network == 'testnet60x') else 19766
 
         # use default port for network if not specified in energi.conf
         if not ('port' in creds):
