@@ -375,7 +375,7 @@ class Proposal(GovernanceClass, BaseModel):
         query = (self
                  .select(self, GovernanceObject)  # Note that we are selecting both models.
                  .join(GovernanceObject)
-                 .where(GovernanceObject.absolute_yes_count > proposal_quorum)
+                 .where(GovernanceObject.absolute_yes_count >= proposal_quorum)
                  .order_by(GovernanceObject.absolute_yes_count.desc(), GovernanceObject.object_hash.desc())
                  )
 
