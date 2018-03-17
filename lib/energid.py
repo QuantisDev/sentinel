@@ -163,7 +163,7 @@ class EnergiDaemon():
         maturity_phase_delta = 4320      # ~(60*24*3)
         if config.network == 'testnet':
             maturity_phase_delta = 30    # testnet
-        else if config.network == 'testnet60x'
+        elif config.network == 'testnet60x':
             maturity_phase_delta = 60    # testnet60x
 
         event_block_height = self.next_superblock_height()
