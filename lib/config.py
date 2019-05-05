@@ -17,7 +17,7 @@ min_energid_proto_version_with_sentinel_ping = 70207
 def get_energi_conf():
     home = os.environ.get('HOME')
 
-    energi_conf = os.path.join(home, ".energicore/energi.conf")
+    energi_conf = os.path.join(home, ".quantisnetcore/quantisnet.conf")
     if sys.platform == 'darwin':
         energi_conf = os.path.join(home, "Library/Application Support/EnergiCore/energi.conf")
 
