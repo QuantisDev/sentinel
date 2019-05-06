@@ -8,29 +8,29 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 import config
 
-from energi_config import EnergiConfig
-from energid import EnergiDaemon
+from quantisnet_config import QuantisnetConfig
+from quantisnetd import QuantisnetDaemon
 
-def test_energid():
-    config_text = EnergiConfig.slurp_config_file(config.energi_conf)
+def test_quantisnetd():
+    config_text = QuantisnetConfig.slurp_config_file(config.quantisnet_conf)
     network = 'mainnet'
     is_testnet = False
-    genesis_hash = u'00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6'
+    genesis_hash = u'000007cc671fb0663ccb1c9141e06d04152e9a5a1e8c0e1fdf81b283267faca7'
     for line in config_text.split("\n"):
         if line.startswith('testnet=1'):
             network = 'testnet'
             is_testnet = True
-            genesis_hash = u'00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c'
+            genesis_hash = u'000007cc671fb0663ccb1c9141e06d04152e9a5a1e8c0e1fdf81b283267faca7'
 
-    creds = EnergiConfig.get_rpc_creds(config_text, network)
-    energid = EnergiDaemon(**creds)
-    assert energid.rpc_command is not None
+    creds = QuantisnetConfig.get_rpc_creds(config_text, network)
+    quantisnetd = QuantisnetDaemon(**creds)
+    assert quantisnetd.rpc_command is not None
 
-    assert hasattr(energid, 'rpc_connection')
+    assert hasattr(quantisnetd, 'rpc_connection')
 
-    # Energi testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
+    # Quantisnet testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
     # test commands without arguments
-    info = energid.rpc_command('getinfo')
+    info = quantisnetd.rpc_command('getinfo')
     info_keys = [
         'blocks',
         'connections',
@@ -47,4 +47,4 @@ def test_energid():
     assert info['testnet'] is is_testnet
 
     # test commands with args
-    assert energid.rpc_command('getblockhash', 0) == genesis_hash
+    assert quantisnetd.rpc_command('getblockhash', 0) == genesis_hash
