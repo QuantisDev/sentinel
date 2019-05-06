@@ -1,9 +1,9 @@
 #!/bin/bash
 set -evx
 
-mkdir ~/.energicore
+mkdir ~/.quantisnetcore
 
 # safety check
-if [ ! -f ~/.energicore/.energi.conf ]; then
-  cp share/energi.conf.example ~/.energicore/dash.conf
+if [ ! -f ~/.quantisnetcore/.quantisnet.conf ]; then
+  cp share/quantisnet.conf.example ~/.quantisnetcore/dash.conf
 fi
