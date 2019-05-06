@@ -6,7 +6,7 @@ from pprint import pprint
 import sys
 import os
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib')))
-import energilib
+import quantisnetlib
 # ============================================================================
 usage = "%s <hex>" % sys.argv[0]
 
@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
     print(usage)
     sys.exit(1)
 else:
-    obj = energilib.deserialise(sys.argv[1])
+    obj = quantisnetlib.deserialise(sys.argv[1])
 
 pdb.set_trace()
 1
