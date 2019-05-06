@@ -7,11 +7,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 from misc import printdbg
 
 
-class EnergiConfig():
+class QuantisnetConfig():
 
     @classmethod
     def slurp_config_file(self, filename):
-        # read energi.conf config but skip commented lines
+        # read quantisnet.conf config but skip commented lines
         f = io.open(filename)
         lines = []
         for line in f:
@@ -20,27 +20,27 @@ class EnergiConfig():
             lines.append(line)
         f.close()
 
-        # data is energi.conf without commented lines
+        # data is quantisnet.conf without commented lines
         data = ''.join(lines)
 
         return data
 
     @classmethod
     def get_rpc_creds(self, data, network='mainnet'):
-        # get rpc info from energi.conf
+        # get rpc info from quantisnet.conf
         match = re.findall(r'rpc(user|password|port)=(.*?)$', data, re.MULTILINE)
 
         # python >= 2.7
         creds = {key: value for (key, value) in match}
 
-        # standard Energi defaults, to accomodate all three networks (mainnet, testnet and testnet60x)
+        # standard Quantisnet defaults, to accomodate all three networks (mainnet, testnet and testnet60x)
         default_port = 9796 if (network == 'mainnet') else 19796 if (network == 'testnet') else 29796 if (network == 'testnet60x') else 19766
 
-        # use default port for network if not specified in energi.conf
+        # use default port for network if not specified in quantisnet.conf
         if not ('port' in creds):
             creds[u'port'] = default_port
 
-        # convert to an int if taken from energi.conf
+        # convert to an int if taken from quantisnet.conf
         creds[u'port'] = int(creds[u'port'])
 
         # return a dictionary with RPC credential key, value pairs
