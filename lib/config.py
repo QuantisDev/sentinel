@@ -3,27 +3,27 @@
 """
 import sys
 import os
-import energi_config
+import quantisnet_config
 
 default_sentinel_config = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '../sentinel.conf')
 )
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
-sentinel_cfg = energi_config.EnergiConfig.tokenize(sentinel_config_file)
+sentinel_cfg = quantisnet_config.QuantisnetConfig.tokenize(sentinel_config_file)
 sentinel_version = "1.1.0"
-min_energid_proto_version_with_sentinel_ping = 70207
+min_quantisnetd_proto_version_with_sentinel_ping = 70207
 
 
-def get_energi_conf():
+def get_quantisnet_conf():
     home = os.environ.get('HOME')
 
-    energi_conf = os.path.join(home, ".quantisnetcore/quantisnet.conf")
+    quantisnet_conf = os.path.join(home, ".quantisnetcore/quantisnet.conf")
     if sys.platform == 'darwin':
-        energi_conf = os.path.join(home, "Library/Application Support/EnergiCore/energi.conf")
+        quantisnet_conf = os.path.join(home, "Library/Application Support/QuantisnetCore/quantisnet.conf")
 
-    energi_conf = sentinel_cfg.get('energi_conf', energi_conf)
+    quantisnet_conf = sentinel_cfg.get('quantisnet_conf', quantisnet_conf)
 
-    return energi_conf
+    return quantisnet_conf
 
 
 def get_network():
@@ -79,6 +79,6 @@ def get_db_conn():
     return db
 
 
-energi_conf = get_energi_conf()
+quantisnet_conf = get_quantisnet_conf()
 network = get_network()
 db = get_db_conn()
