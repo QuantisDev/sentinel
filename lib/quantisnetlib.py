@@ -11,7 +11,7 @@ import binascii
 from misc import printdbg, epoch2str
 
 
-def is_valid_energi_address(address, network='mainnet'):
+def is_valid_quantisnet_address(address, network='mainnet'):
     # Only public key addresses are allowed
     # A valid address is a RIPEMD-160 hash which contains 20 bytes
     # Prior to base58 encoding 1 version byte is prepended and
@@ -19,7 +19,7 @@ def is_valid_energi_address(address, network='mainnet'):
     # base58 encoded bytes should be 25.  This means the number of characters
     # in the encoding should be about 34 ( 25 * log2( 256 ) / log2( 58 ) ).
     # TODO: might need to modify
-    energi_version = 140 if network == 'testnet' else 76
+    quantisnet_version = 140 if network == 'testnet' else 76
 
     # Check length (This is important because the base58 library has problems
     # with long addresses (which are invalid anyway).
@@ -32,10 +32,10 @@ def is_valid_energi_address(address, network='mainnet'):
     #     decoded = base58.b58decode_chk(address)
     #     address_version = ord(decoded[0:1])
     # except:
-    #     # rescue from exception, not a valid Energi address
+    #     # rescue from exception, not a valid Quantisnet address
     #     return False
 
-    # if (address_version != energi_version):
+    # if (address_version != quantisnet_version):
     #     return False
 
     return True
@@ -179,43 +179,43 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time):
     return sb
 
 
-# shims 'til we can fix the energid side
-def SHIM_serialise_for_energid(sentinel_hex):
-    from models import ENERGID_GOVOBJ_TYPES
+# shims 'til we can fix the quantisnetd side
+def SHIM_serialise_for_quantisnetd(sentinel_hex):
+    from models import QUANTISNETD_GOVOBJ_TYPES
     # unpack
     obj = deserialise(sentinel_hex)
 
-    # shim for energid
+    # shim for quantisnetd
     govtype = obj[0]
 
     # add 'type' attribute
-    obj[1]['type'] = ENERGID_GOVOBJ_TYPES[govtype]
+    obj[1]['type'] = QUANTISNETD_GOVOBJ_TYPES[govtype]
 
-    # superblock => "trigger" in energid
+    # superblock => "trigger" in quantisnetd
     if govtype == 'superblock':
         obj[0] = 'trigger'
 
-    # energid expects an array (even though there is only a 1:1 relationship between govobj->class)
+    # quantisnetd expects an array (even though there is only a 1:1 relationship between govobj->class)
     obj = [obj]
 
     # re-pack
-    energid_hex = serialise(obj)
-    return energid_hex
+    quantisnetd_hex = serialise(obj)
+    return quantisnetd_hex
 
 
-# shims 'til we can fix the energid side
-def SHIM_deserialise_from_energid(energid_hex):
+# shims 'til we can fix the quantisnetd side
+def SHIM_deserialise_from_quantisnetd(quantisnetd_hex):
     # unpack
-    obj = deserialise(energid_hex)
+    obj = deserialise(quantisnetd_hex)
 
-    # shim from energid
+    # shim from quantisnetd
     # only one element in the array...
     obj = obj[0]
 
     # extract the govobj type
     govtype = obj[0]
 
-    # superblock => "trigger" in energid
+    # superblock => "trigger" in quantisnetd
     if govtype == 'trigger':
         obj[0] = govtype = 'superblock'
 
@@ -249,7 +249,7 @@ def did_we_vote(output):
     err_msg = ''
 
     try:
-        detail = output.get('detail').get('energi.conf')
+        detail = output.get('detail').get('quantisnet.conf')
         result = detail.get('result')
         if 'errorMessage' in detail:
             err_msg = detail.get('errorMessage')
