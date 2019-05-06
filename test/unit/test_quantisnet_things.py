@@ -76,7 +76,7 @@ def test_valid_quantisnet_address():
     assert is_valid_quantisnet_address(test, 'testnet') is True
 
 
-def test_invalid_dash_address():
+def test_invalid_quantisnet_address():
     from quantisnetlib import is_valid_quantisnet_address
 
     main = invalid_quantisnet_address()
@@ -130,11 +130,11 @@ def test_hash_function():
 
 
 def test_blocks_to_seconds():
-    import dashlib
+    import quantisnetlib
     from decimal import Decimal
 
     precision = Decimal('0.001')
-    assert Decimal(dashlib.blocks_to_seconds(0)) == Decimal(0.0)
-    assert Decimal(dashlib.blocks_to_seconds(2)).quantize(precision) \
+    assert Decimal(quantisnetlib.blocks_to_seconds(0)) == Decimal(0.0)
+    assert Decimal(quantisnetlib.blocks_to_seconds(2)).quantize(precision) \
         == Decimal(314.4).quantize(precision)
-    assert int(dashlib.blocks_to_seconds(16616)) == 2612035
+    assert int(quantisnetlib.blocks_to_seconds(16616)) == 2612035
