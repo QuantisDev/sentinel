@@ -11,7 +11,7 @@ from peewee import IntegerField, CharField, TextField, ForeignKeyField, DecimalF
 import peewee
 import playhouse.signals
 import misc
-import energid
+import quantisnetd
 from misc import (printdbg, is_numeric)
 import config
 from bitcoinrpc.authproxy import JSONRPCException
@@ -28,7 +28,7 @@ db.connect()
 
 
 # TODO: lookup table?
-ENERGID_GOVOBJ_TYPES = {
+QUANTISNETD_GOVOBJ_TYPES = {
     'proposal': 1,
     'superblock': 2,
     'watchdog': 3,
@@ -71,10 +71,10 @@ class GovernanceObject(BaseModel):
     class Meta:
         db_table = 'governance_objects'
 
-    # sync energid gobject list with our local relational DB backend
+    # sync quantisnetd gobject list with our local relational DB backend
     @classmethod
-    def sync(self, energid):
-        golist = energid.rpc_command('gobject', 'list')
+    def sync(self, quantisnetd):
+        golist = quantisnetd.rpc_command('gobject', 'list')
 
         # objects which are removed from the network should be removed from the DB
         try:
@@ -83,7 +83,7 @@ class GovernanceObject(BaseModel):
                 purged.delete_instance(recursive=True, delete_nullable=True)
 
             for item in golist.values():
-                (go, subobj) = self.import_gobject_from_energid(energid, item)
+                (go, subobj) = self.import_gobject_from_quantisnetd(quantisnetd, item)
         except Exception as e:
             printdbg("Got an error upon import: %s" % e)
 
@@ -95,8 +95,8 @@ class GovernanceObject(BaseModel):
         return query
 
     @classmethod
-    def import_gobject_from_energid(self, energid, rec):
-        import energilib
+    def import_gobject_from_quantisnetd(self, quantisnetd, rec):
+        import quantisnetlib
         import decimal
         import inflection
 
@@ -112,9 +112,9 @@ class GovernanceObject(BaseModel):
             'no_count': rec['NoCount'],
         }
 
-        # shim/energid conversion
-        object_hex = energilib.SHIM_deserialise_from_energid(object_hex)
-        objects = energilib.deserialise(object_hex)
+        # shim/quantisnetd conversion
+        object_hex = quantisnetlib.SHIM_deserialise_from_quantisnetd(object_hex)
+        objects = quantisnetlib.deserialise(object_hex)
         subobj = None
 
         obj_type, dikt = objects[0:2:1]
@@ -124,11 +124,11 @@ class GovernanceObject(BaseModel):
         # set object_type in govobj table
         gobj_dict['object_type'] = subclass.govobj_type
 
-        # exclude any invalid model data from energid...
+        # exclude any invalid model data from quantisnetd...
         valid_keys = subclass.serialisable_fields()
         subdikt = {k: dikt[k] for k in valid_keys if k in dikt}
 
-        # get/create, then sync vote counts from energid, with every run
+        # get/create, then sync vote counts from quantisnetd, with every run
         govobj, created = self.get_or_create(object_hash=object_hash, defaults=gobj_dict)
         if created:
             printdbg("govobj created = %s" % created)
@@ -137,19 +137,19 @@ class GovernanceObject(BaseModel):
             printdbg("govobj updated = %d" % count)
         subdikt['governance_object'] = govobj
 
-        # get/create, then sync payment amounts, etc. from energid - energid is the master
+        # get/create, then sync payment amounts, etc. from quantisnetd - quantisnetd is the master
         try:
             newdikt = subdikt.copy()
             newdikt['object_hash'] = object_hash
             if subclass(**newdikt).is_valid() is False:
-                govobj.vote_delete(energid)
+                govobj.vote_delete(quantisnetd)
                 return (govobj, None)
 
             subobj, created = subclass.get_or_create(object_hash=object_hash, defaults=subdikt)
         except Exception as e:
             # in this case, vote as delete, and log the vote in the DB
-            printdbg("Got invalid object from energid! %s" % e)
-            govobj.vote_delete(energid)
+            printdbg("Got invalid object from quantisnetd! %s" % e)
+            govobj.vote_delete(quantisnetd)
             return (govobj, None)
 
         if created:
@@ -161,9 +161,9 @@ class GovernanceObject(BaseModel):
         # ATM, returns a tuple w/gov attributes and the govobj
         return (govobj, subobj)
 
-    def vote_delete(self, energid):
+    def vote_delete(self, quantisnetd):
         if not self.voted_on(signal=VoteSignals.delete, outcome=VoteOutcomes.yes):
-            self.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
+            self.vote(quantisnetd, VoteSignals.delete, VoteOutcomes.yes)
         return
 
     def get_vote_command(self, signal, outcome):
@@ -171,8 +171,8 @@ class GovernanceObject(BaseModel):
                signal.name, outcome.name]
         return cmd
 
-    def vote(self, energid, signal, outcome):
-        import energilib as egilib
+    def vote(self, quantisnetd, signal, outcome):
+        import quantisnetlib as egilib
 
         # At this point, will probably never reach here. But doesn't hurt to
         # have an extra check just in case objects get out of sync (people will
@@ -202,7 +202,7 @@ class GovernanceObject(BaseModel):
 
         vote_command = self.get_vote_command(signal, outcome)
         printdbg(' '.join(vote_command))
-        output = energid.rpc_command(*vote_command)
+        output = quantisnetd.rpc_command(*vote_command)
 
         # extract vote output parsing to external lib
         voted = egilib.did_we_vote(output)
@@ -213,11 +213,11 @@ class GovernanceObject(BaseModel):
                  object_hash=self.object_hash).save()
         else:
             printdbg('VOTE failed, trying to sync with network vote')
-            self.sync_network_vote(energid, signal)
+            self.sync_network_vote(quantisnetd, signal)
 
-    def sync_network_vote(self, energid, signal):
+    def sync_network_vote(self, quantisnetd, signal):
         printdbg('\tsyncing network vote for object %s with signal %s' % (self.object_hash, signal.name))
-        vote_info = energid.get_my_gobject_votes(self.object_hash)
+        vote_info = quantisnetd.get_my_gobject_votes(self.object_hash)
         for vdikt in vote_info:
             if vdikt['signal'] != signal.name:
                 continue
@@ -267,13 +267,13 @@ class Proposal(GovernanceClass, BaseModel):
     payment_amount = DecimalField(max_digits=16, decimal_places=8)
     object_hash = CharField(max_length=64)
 
-    govobj_type = ENERGID_GOVOBJ_TYPES['proposal']
+    govobj_type = QUANTISNETD_GOVOBJ_TYPES['proposal']
 
     class Meta:
         db_table = 'proposals'
 
     def is_valid(self):
-        import energilib as egilib
+        import quantisnetlib as egilib
 
         printdbg("In Proposal#is_valid, for Proposal: %s" % self.__dict__)
 
@@ -303,9 +303,9 @@ class Proposal(GovernanceClass, BaseModel):
                 printdbg("\tProposal amount [%s] is negative or zero, returning False" % self.payment_amount)
                 return False
 
-            # payment address is valid base58 energi addr, non-multisig
-            if not egilib.is_valid_energi_address(self.payment_address, config.network):
-                printdbg("\tPayment address [%s] not a valid Energi address for network [%s], returning False" % (self.payment_address, config.network))
+            # payment address is valid base58 quantisnet addr, non-multisig
+            if not egilib.is_valid_quantisnet_address(self.payment_address, config.network):
+                printdbg("\tPayment address [%s] not a valid Quantisnet address for network [%s], returning False" % (self.payment_address, config.network))
                 return False
 
             # URL
@@ -328,7 +328,7 @@ class Proposal(GovernanceClass, BaseModel):
 
     def is_expired(self, superblockcycle=None):
         from constants import SUPERBLOCK_FUDGE_WINDOW
-        import energilib
+        import quantisnetlib
 
         if not superblockcycle:
             raise Exception("Required field superblockcycle missing.")
@@ -340,7 +340,7 @@ class Proposal(GovernanceClass, BaseModel):
         # half the SB cycle, converted to seconds
         # add the fudge_window in seconds, defined elsewhere in Sentinel
         expiration_window_seconds = int(
-            (energilib.blocks_to_seconds(superblockcycle) / 2) +
+            (quantisnetlib.blocks_to_seconds(superblockcycle) / 2) +
             SUPERBLOCK_FUDGE_WINDOW
         )
         printdbg("\texpiration_window_seconds = %s" % expiration_window_seconds)
@@ -363,7 +363,7 @@ class Proposal(GovernanceClass, BaseModel):
         if (self.end_epoch < (misc.now() - thirty_days)):
             return True
 
-        # TBD (item moved to external storage/EnergiDrive, etc.)
+        # TBD (item moved to external storage/QuantisnetDrive, etc.)
         return False
 
     @classmethod
@@ -408,17 +408,17 @@ class Proposal(GovernanceClass, BaseModel):
             return rank
 
     def get_prepare_command(self):
-        import energilib
-        obj_data = energilib.SHIM_serialise_for_energid(self.serialise())
+        import quantisnetlib
+        obj_data = quantisnetlib.SHIM_serialise_for_quantisnetd(self.serialise())
 
         # new superblocks won't have parent_hash, revision, etc...
         cmd = ['gobject', 'prepare', '0', '1', str(int(time.time())), obj_data]
 
         return cmd
 
-    def prepare(self, energid):
+    def prepare(self, quantisnetd):
         try:
-            object_hash = energid.rpc_command(*self.get_prepare_command())
+            object_hash = quantisnetd.rpc_command(*self.get_prepare_command())
             printdbg("Submitted: [%s]" % object_hash)
             self.go.object_fee_tx = object_hash
             self.go.save()
@@ -439,14 +439,14 @@ class Superblock(BaseModel, GovernanceClass):
     sb_hash = CharField()
     object_hash = CharField(max_length=64)
 
-    govobj_type = ENERGID_GOVOBJ_TYPES['superblock']
+    govobj_type = QUANTISNETD_GOVOBJ_TYPES['superblock']
     only_masternode_can_submit = True
 
     class Meta:
         db_table = 'superblocks'
 
     def is_valid(self):
-        import energilib
+        import quantisnetlib
         import decimal
 
         printdbg("In Superblock#is_valid, for SB: %s" % self.__dict__)
@@ -454,7 +454,7 @@ class Superblock(BaseModel, GovernanceClass):
         # it's a string from the DB...
         addresses = self.payment_addresses.split('|')
         for addr in addresses:
-            if not energilib.is_valid_energi_address(addr, config.network):
+            if not quantisnetlib.is_valid_quantisnet_address(addr, config.network):
                 printdbg("\tInvalid address [%s], returning False" % addr)
                 return False
 
@@ -488,12 +488,12 @@ class Superblock(BaseModel, GovernanceClass):
 
     def is_deletable(self):
         # end_date < (current_date - 30 days)
-        # TBD (item moved to external storage/EnergiDrive, etc.)
+        # TBD (item moved to external storage/QuantisnetDrive, etc.)
         pass
 
     def hash(self):
-        import energilib
-        return energilib.hashit(self.serialise())
+        import quantisnetlib
+        return quantisnetlib.hashit(self.serialise())
 
     def hex_hash(self):
         return "%x" % self.hash()
@@ -599,37 +599,37 @@ class Watchdog(BaseModel, GovernanceClass):
     created_at = IntegerField()
     object_hash = CharField(max_length=64)
 
-    govobj_type = ENERGID_GOVOBJ_TYPES['watchdog']
+    govobj_type = QUANTISNETD_GOVOBJ_TYPES['watchdog']
     only_masternode_can_submit = True
 
     @classmethod
-    def active(self, energid):
+    def active(self, quantisnetd):
         now = int(time.time())
         resultset = self.select().where(
-            self.created_at >= (now - energid.SENTINEL_WATCHDOG_MAX_SECONDS)
+            self.created_at >= (now - quantisnetd.SENTINEL_WATCHDOG_MAX_SECONDS)
         )
         return resultset
 
     @classmethod
-    def expired(self, energid):
+    def expired(self, quantisnetd):
         now = int(time.time())
         resultset = self.select().where(
-            self.created_at < (now - energid.SENTINEL_WATCHDOG_MAX_SECONDS)
+            self.created_at < (now - quantisnetd.SENTINEL_WATCHDOG_MAX_SECONDS)
         )
         return resultset
 
-    def is_expired(self, energid):
+    def is_expired(self, quantisnetd):
         now = int(time.time())
-        return (self.created_at < (now - energid.SENTINEL_WATCHDOG_MAX_SECONDS))
+        return (self.created_at < (now - quantisnetd.SENTINEL_WATCHDOG_MAX_SECONDS))
 
-    def is_valid(self, energid):
-        if self.is_expired(energid):
+    def is_valid(self, quantisnetd):
+        if self.is_expired(quantisnetd):
             return False
 
         return True
 
-    def is_deletable(self, energid):
-        if self.is_expired(energid):
+    def is_deletable(self, quantisnetd):
+        if self.is_expired(quantisnetd):
             return True
 
         return False
