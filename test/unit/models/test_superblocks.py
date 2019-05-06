@@ -123,8 +123,8 @@ def superblock():
 
 
 def test_superblock_is_valid(superblock):
-    from energid import EnergiDaemon
-    energid = EnergiDaemon.from_energi_conf(config.energi_conf)
+    from quantisnetd import QuantisnetDaemon
+    quantisnetd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
 
     orig = Superblock(**superblock.get_dict())  # make a copy
 
@@ -211,16 +211,16 @@ def test_serialisable_fields():
 
 
 def test_deterministic_superblock_creation(go_list_proposals):
-    import energilib
+    import quantisnetlib
     import misc
-    from energid import EnergiDaemon
-    energid = EnergiDaemon.from_energi_conf(config.energi_conf)
+    from quantisnetd import QuantisnetDaemon
+    quantisnetd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
     for item in go_list_proposals:
-        (go, subobj) = GovernanceObject.import_gobject_from_energid(energid, item)
+        (go, subobj) = GovernanceObject.import_gobject_from_quantisnetd(quantisnetd, item)
 
     max_budget = 60
     prop_list = Proposal.approved_and_ranked(proposal_quorum=1, next_superblock_max_budget=max_budget)
-    sb = energilib.create_superblock(prop_list, 72000, budget_max=max_budget, sb_epoch_time=misc.now())
+    sb = quantisnetlib.create_superblock(prop_list, 72000, budget_max=max_budget, sb_epoch_time=misc.now())
 
     assert sb.event_block_height == 72000
     assert sb.payment_addresses == 'yYe8KwyaUu5YswSYmB3q3ryx8XTUu9y7Ui|yTC62huR4YQEPn9AJHjnQxxreHSbgAoatV'
@@ -231,11 +231,11 @@ def test_deterministic_superblock_creation(go_list_proposals):
 
 
 def test_deterministic_superblock_selection(go_list_superblocks):
-    from energid import EnergiDaemon
-    energid = EnergiDaemon.from_energi_conf(config.energi_conf)
+    from quantisnetd import QuantisnetDaemon
+    quantisnetd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
 
     for item in go_list_superblocks:
-        (go, subobj) = GovernanceObject.import_gobject_from_energid(energid, item)
+        (go, subobj) = GovernanceObject.import_gobject_from_quantisnetd(quantisnetd, item)
 
     # highest hash wins if same -- so just order by hash
     sb = Superblock.find_highest_deterministic('22a5f429c5ffb2b79b1b30c3ac30751284e3efa4e710bc7fd35fbe7456b1e485')
