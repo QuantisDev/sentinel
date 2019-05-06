@@ -1,5 +1,5 @@
 """
-energid JSONRPC interface
+quantisnetd JSONRPC interface
 """
 import os
 import sys
@@ -13,7 +13,7 @@ from decimal import Decimal
 import time
 
 
-class EnergiDaemon():
+class QuantisnetDaemon():
     def __init__(self, **kwargs):
         host = kwargs.get('host', '127.0.0.1')
         user = kwargs.get('user')
@@ -22,7 +22,7 @@ class EnergiDaemon():
 
         self.creds = (user, password, host, port)
 
-        # memoize calls to some energid methods
+        # memoize calls to some quantisnetd methods
         self.governance_info = None
         self.gobject_votes = {}
 
@@ -31,10 +31,10 @@ class EnergiDaemon():
         return AuthServiceProxy("http://{0}:{1}@{2}:{3}".format(*self.creds))
 
     @classmethod
-    def from_energi_conf(self, energi_dot_conf):
-        from energi_config import EnergiConfig
-        config_text = EnergiConfig.slurp_config_file(energi_dot_conf)
-        creds = EnergiConfig.get_rpc_creds(config_text, config.network)
+    def from_quantisnet_conf(self, quantisnet_dot_conf):
+        from quantisnet_config import QuantisnetConfig
+        config_text = QuantisnetConfig.slurp_config_file(quantisnet_dot_conf)
+        creds = QuantisnetConfig.get_rpc_creds(config_text, config.network)
 
         return self(**creds)
 
@@ -57,7 +57,7 @@ class EnergiDaemon():
         return golist
 
     def get_current_masternode_vin(self):
-        from energilib import parse_masternode_status_vin
+        from quantisnetlib import parse_masternode_status_vin
 
         my_vin = None
 
@@ -142,7 +142,7 @@ class EnergiDaemon():
     # "my" votes refers to the current running masternode
     # memoized on a per-run, per-object_hash basis
     def get_my_gobject_votes(self, object_hash):
-        import energilib
+        import quantisnetlib
         if not self.gobject_votes.get(object_hash):
             my_vin = self.get_current_masternode_vin()
             # if we can't get MN vin from output of `masternode status`,
@@ -154,7 +154,7 @@ class EnergiDaemon():
 
             cmd = ['gobject', 'getcurrentvotes', object_hash, txid, vout_index]
             raw_votes = self.rpc_command(*cmd)
-            self.gobject_votes[object_hash] = energilib.parse_raw_votes(raw_votes)
+            self.gobject_votes[object_hash] = quantisnetlib.parse_raw_votes(raw_votes)
 
         return self.gobject_votes[object_hash]
 
@@ -180,11 +180,11 @@ class EnergiDaemon():
         return (current_height >= maturity_phase_start_block)
 
     def we_are_the_winner(self):
-        import energilib
+        import quantisnetlib
         # find the elected MN vin for superblock creation...
         current_block_hash = self.current_block_hash()
         mn_list = self.get_masternodes()
-        winner = energilib.elect_mn(block_hash=current_block_hash, mnlist=mn_list)
+        winner = quantisnetlib.elect_mn(block_hash=current_block_hash, mnlist=mn_list)
         my_vin = self.get_current_masternode_vin()
 
         # print "current_block_hash: [%s]" % current_block_hash
@@ -203,7 +203,7 @@ class EnergiDaemon():
         return (self.MASTERNODE_WATCHDOG_MAX_SECONDS // 2)
 
     def estimate_block_time(self, height):
-        import energilib
+        import quantisnetlib
         """
         Called by block_height_to_epoch if block height is in the future.
         Call `block_height_to_epoch` instead of this method.
@@ -216,7 +216,7 @@ class EnergiDaemon():
         if (diff < 0):
             raise Exception("Oh Noes.")
 
-        future_seconds = energilib.blocks_to_seconds(diff)
+        future_seconds = quantisnetlib.blocks_to_seconds(diff)
         estimated_epoch = int(time.time() + future_seconds)
 
         return estimated_epoch
@@ -244,7 +244,7 @@ class EnergiDaemon():
     @property
     def has_sentinel_ping(self):
         getinfo = self.rpc_command('getinfo')
-        return (getinfo['protocolversion'] >= config.min_energid_proto_version_with_sentinel_ping)
+        return (getinfo['protocolversion'] >= config.min_quantisnetd_proto_version_with_sentinel_ping)
 
     def ping(self):
         self.rpc_command('sentinelping', config.sentinel_version)
