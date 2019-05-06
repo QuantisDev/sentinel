@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib')))
 import config
 from models import Superblock, Proposal, GovernanceObject, Setting, Signal, Vote, Outcome, Watchdog
-dashd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
+quantisnetd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
 import misc
 # ==============================================================================
 # do stuff here
@@ -32,7 +32,7 @@ pr = Proposal(
 # also, create the `within_window` or similar method & use that.
 #
 bh = 131112
-bh_epoch = dashd.block_height_to_epoch(bh)
+bh_epoch = quantisnetd.block_height_to_epoch(bh)
 
 fudge = 72000
 window_start = 1483689082 - fudge
