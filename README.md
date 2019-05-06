@@ -21,9 +21,9 @@ Update system packages and ensure virtualenv is installed:
     $ sudo apt-get update
     $ sudo apt-get -y install python-virtualenv
 
-Make sure the local Energi daemon running is at least version 12.1 (120100)
+Make sure the local QuantisNet daemon running is at least version 20.102 (2010200)
 
-    $ energi-cli getinfo | grep version
+    $ quantisnet-cli getinfo | grep version
 
 ### 2. Install Sentinel
 
