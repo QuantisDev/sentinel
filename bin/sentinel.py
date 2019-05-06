@@ -5,7 +5,7 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib
 import init
 import config
 import misc
-from energid import EnergiDaemon
+from quantisnetd import QuantisnetDaemon
 from models import Superblock, Proposal, GovernanceObject, Watchdog
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
@@ -19,22 +19,22 @@ from scheduler import Scheduler
 import argparse
 
 
-# sync energid gobject list with our local relational DB backend
-def perform_energid_object_sync(energid):
-    GovernanceObject.sync(energid)
+# sync quantisnetd gobject list with our local relational DB backend
+def perform_quantisnetd_object_sync(quantisnetd):
+    GovernanceObject.sync(quantisnetd)
 
 
 # delete old watchdog objects, create new when necessary
-def watchdog_check(energid):
+def watchdog_check(quantisnetd):
     printdbg("in watchdog_check")
 
     # delete expired watchdogs
-    for wd in Watchdog.expired(energid):
+    for wd in Watchdog.expired(quantisnetd):
         printdbg("\tFound expired watchdog [%s], voting to delete" % wd.object_hash)
-        wd.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
+        wd.vote(quantisnetd, VoteSignals.delete, VoteOutcomes.yes)
 
     # now, get all the active ones...
-    active_wd = Watchdog.active(energid)
+    active_wd = Watchdog.active(quantisnetd)
     active_count = active_wd.count()
 
     # none exist, submit a new one to the network
@@ -42,7 +42,7 @@ def watchdog_check(energid):
         # create/submit one
         printdbg("\tNo watchdogs exist... submitting new one.")
         wd = Watchdog(created_at=int(time.time()))
-        wd.submit(energid)
+        wd.submit(quantisnetd)
 
     else:
         wd_list = sorted(active_wd, key=lambda wd: wd.object_hash)
@@ -50,34 +50,34 @@ def watchdog_check(energid):
         # highest hash wins
         winner = wd_list.pop()
         printdbg("\tFound winning watchdog [%s], voting VALID" % winner.object_hash)
-        winner.vote(energid, VoteSignals.valid, VoteOutcomes.yes)
+        winner.vote(quantisnetd, VoteSignals.valid, VoteOutcomes.yes)
 
         # if remaining Watchdogs exist in the list, vote delete
         for wd in wd_list:
             printdbg("\tFound losing watchdog [%s], voting DELETE" % wd.object_hash)
-            wd.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
+            wd.vote(quantisnetd, VoteSignals.delete, VoteOutcomes.yes)
 
     printdbg("leaving watchdog_check")
 
 
-def prune_expired_proposals(energid):
+def prune_expired_proposals(quantisnetd):
     # vote delete for old proposals
-    for proposal in Proposal.expired(energid.superblockcycle()):
-        proposal.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
+    for proposal in Proposal.expired(quantisnetd.superblockcycle()):
+        proposal.vote(quantisnetd, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping energid
-def sentinel_ping(energid):
+# ping quantisnetd
+def sentinel_ping(quantisnetd):
     printdbg("in sentinel_ping")
 
-    energid.ping()
+    quantisnetd.ping()
 
     printdbg("leaving sentinel_ping")
 
-def attempt_superblock_creation(energid):
-    import energilib
+def attempt_superblock_creation(quantisnetd):
+    import quantisnetlib
 
-    if not energid.is_masternode():
+    if not quantisnetd.is_masternode():
         print("We are not a Masternode... can't submit superblocks!")
         return
 
@@ -88,7 +88,7 @@ def attempt_superblock_creation(energid):
     # has this masternode voted on *any* superblocks at the given event_block_height?
     # have we voted FUNDING=YES for a superblock for this specific event_block_height?
 
-    event_block_height = energid.next_superblock_height()
+    event_block_height = quantisnetd.next_superblock_height()
 
     if Superblock.is_voted_funding(event_block_height):
         # printdbg("ALREADY VOTED! 'til next time!")
@@ -96,20 +96,20 @@ def attempt_superblock_creation(energid):
         # vote down any new SBs because we've already chosen a winner
         for sb in Superblock.at_height(event_block_height):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(energid, VoteSignals.funding, VoteOutcomes.no)
+                sb.vote(quantisnetd, VoteSignals.funding, VoteOutcomes.no)
 
         # now return, we're done
         return
 
-    if not energid.is_govobj_maturity_phase():
+    if not quantisnetd.is_govobj_maturity_phase():
         printdbg("Not in maturity phase yet -- will not attempt Superblock")
         return
 
-    proposals = Proposal.approved_and_ranked(proposal_quorum=energid.governance_quorum(), next_superblock_max_budget=energid.next_superblock_max_budget())
-    budget_max = energid.get_superblock_budget_allocation(event_block_height)
-    sb_epoch_time = energid.block_height_to_epoch(event_block_height)
+    proposals = Proposal.approved_and_ranked(proposal_quorum=quantisnetd.governance_quorum(), next_superblock_max_budget=quantisnetd.next_superblock_max_budget())
+    budget_max = quantisnetd.get_superblock_budget_allocation(event_block_height)
+    sb_epoch_time = quantisnetd.block_height_to_epoch(event_block_height)
 
-    sb = energilib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time)
+    sb = quantisnetlib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time)
     if not sb:
         printdbg("No superblock created, sorry. Returning.")
         return
@@ -117,12 +117,12 @@ def attempt_superblock_creation(energid):
     # find the deterministic SB w/highest object_hash in the DB
     dbrec = Superblock.find_highest_deterministic(sb.hex_hash())
     if dbrec:
-        dbrec.vote(energid, VoteSignals.funding, VoteOutcomes.yes)
+        dbrec.vote(quantisnetd, VoteSignals.funding, VoteOutcomes.yes)
 
         # any other blocks which match the sb_hash are duplicates, delete them
         for sb in Superblock.select().where(Superblock.sb_hash == sb.hex_hash()):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(energid, VoteSignals.delete, VoteOutcomes.yes)
+                sb.vote(quantisnetd, VoteSignals.delete, VoteOutcomes.yes)
 
         printdbg("VOTED FUNDING FOR SB! We're done here 'til next superblock cycle.")
         return
@@ -130,24 +130,24 @@ def attempt_superblock_creation(energid):
         printdbg("The correct superblock wasn't found on the network...")
 
     # if we are the elected masternode...
-    if (energid.we_are_the_winner()):
+    if (quantisnetd.we_are_the_winner()):
         printdbg("we are the winner! Submit SB to network")
-        sb.submit(energid)
+        sb.submit(quantisnetd)
 
 
-def check_object_validity(energid):
+def check_object_validity(quantisnetd):
     # vote (in)valid objects
     for gov_class in [Proposal, Superblock]:
         for obj in gov_class.select():
-            obj.vote_validity(energid)
+            obj.vote_validity(quantisnetd)
 
 
-def is_energid_port_open(energid):
+def is_quantisnetd_port_open(quantisnetd):
     # test socket open before beginning, display instructive message to MN
     # operators if it's not
     port_open = False
     try:
-        info = energid.rpc_command('getgovernanceinfo')
+        info = quantisnetd.rpc_command('getgovernanceinfo')
         port_open = True
     except (socket.error, JSONRPCException) as e:
         print("%s" % e)
@@ -156,21 +156,21 @@ def is_energid_port_open(energid):
 
 
 def main():
-    energid = EnergiDaemon.from_energi_conf(config.energi_conf)
+    quantisnetd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
     options = process_args()
 
-    # check energid connectivity
-    if not is_energid_port_open(energid):
-        print("Cannot connect to energid. Please ensure energid is running and the JSONRPC port is open to Sentinel.")
+    # check quantisnetd connectivity
+    if not is_quantisnetd_port_open(quantisnetd):
+        print("Cannot connect to quantisnetd. Please ensure quantisnetd is running and the JSONRPC port is open to Sentinel.")
         return
 
-    # check energid sync
-    if not energid.is_synced():
-        print("energid not synced with network! Awaiting full sync before running Sentinel.")
+    # check quantisnetd sync
+    if not quantisnetd.is_synced():
+        print("quantisnetd not synced with network! Awaiting full sync before running Sentinel.")
         return
 
     # ensure valid masternode
-    if not energid.is_masternode():
+    if not quantisnetd.is_masternode():
         print("Invalid Masternode Status, cannot continue.")
         return
 
@@ -202,22 +202,22 @@ def main():
     # ========================================================================
     #
     # load "gobject list" rpc command data, sync objects into internal database
-    perform_energid_object_sync(energid)
+    perform_quantisnetd_object_sync(quantisnetd)
 
-    if energid.has_sentinel_ping:
-        sentinel_ping(energid)
+    if quantisnetd.has_sentinel_ping:
+        sentinel_ping(quantisnetd)
     else:
         # delete old watchdog objects, create a new if necessary
-        watchdog_check(energid)
+        watchdog_check(quantisnetd)
 
     # auto vote network objects as valid/invalid
-    # check_object_validity(energid)
+    # check_object_validity(quantisnetd)
 
     # vote to delete expired proposals
-    prune_expired_proposals(energid)
+    prune_expired_proposals(quantisnetd)
 
     # create a Superblock if necessary
-    attempt_superblock_creation(energid)
+    attempt_superblock_creation(quantisnetd)
 
     # schedule the next run
     Scheduler.schedule_next_run()
