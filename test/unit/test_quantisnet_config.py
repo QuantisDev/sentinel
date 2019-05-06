@@ -6,11 +6,11 @@ os.environ['SENTINEL_CONFIG'] = os.path.normpath(os.path.join(os.path.dirname(__
 os.environ['SENTINEL_ENV'] = 'test'
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../../lib')))
 import config
-from energi_config import EnergiConfig
+from quantisnet_config import QuantisnetConfig
 
 
 @pytest.fixture
-def energi_conf(**kwargs):
+def quantisnet_conf(**kwargs):
     defaults = {
         'rpcuser': 'egirpc',
         'rpcpassword': 'EwJeV3fZTyTVozdECF627BkBMnNDwQaVLakG3A4wXYyk',
@@ -34,8 +34,8 @@ rpcport={rpcport}
 
 
 def test_get_rpc_creds():
-    energi_config = energi_conf()
-    creds = EnergiConfig.get_rpc_creds(energi_config, 'testnet')
+    quantisnet_config = quantisnet_conf()
+    creds = QuantisnetConfig.get_rpc_creds(quantisnet_config, 'testnet')
 
     for key in ('user', 'password', 'port'):
         assert key in creds
@@ -43,8 +43,8 @@ def test_get_rpc_creds():
     assert creds.get('password') == 'EwJeV3fZTyTVozdECF627BkBMnNDwQaVLakG3A4wXYyk'
     assert creds.get('port') == 29241
 
-    energi_config = energi_conf(rpcpassword='s00pers33kr1t', rpcport=8000)
-    creds = EnergiConfig.get_rpc_creds(energi_config, 'testnet')
+    quantisnet_config = quantisnet_conf(rpcpassword='s00pers33kr1t', rpcport=8000)
+    creds = QuantisnetConfig.get_rpc_creds(quantisnet_config, 'testnet')
 
     for key in ('user', 'password', 'port'):
         assert key in creds
@@ -52,8 +52,8 @@ def test_get_rpc_creds():
     assert creds.get('password') == 's00pers33kr1t'
     assert creds.get('port') == 8000
 
-    no_port_specified = re.sub('\nrpcport=.*?\n', '\n', energi_conf(), re.M)
-    creds = EnergiConfig.get_rpc_creds(no_port_specified, 'testnet')
+    no_port_specified = re.sub('\nrpcport=.*?\n', '\n', quantisnet_conf(), re.M)
+    creds = QuantisnetConfig.get_rpc_creds(no_port_specified, 'testnet')
 
     for key in ('user', 'password', 'port'):
         assert key in creds
@@ -62,7 +62,7 @@ def test_get_rpc_creds():
     assert creds.get('port') == 19998
 
 
-# ensure energi network (mainnet, testnet) matches that specified in config
-# requires running energid on whatever port specified...
+# ensure quantisnet network (mainnet, testnet) matches that specified in config
+# requires running quantisnetd on whatever port specified...
 #
-# This is more of a energid/jsonrpc test than a config test...
+# This is more of a quantisnetd/jsonrpc test than a config test...
