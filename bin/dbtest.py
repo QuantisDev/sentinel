@@ -5,15 +5,15 @@ import os
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib')))
 import config
 from models import Superblock, Proposal, GovernanceObject, Setting, Signal, Vote, Outcome, Watchdog
-dashd = EnergiDaemon.from_energi_conf(config.energi_conf)
+dashd = QuantisnetDaemon.from_quantisnet_conf(config.quantisnet_conf)
 import misc
 # ==============================================================================
 # do stuff here
 
 pr = Proposal(
     name='proposal7',
-    url='https://dashcentral.com/proposal7',
-    payment_address='yTC62huR4YQEPn9AJHjnQxxreHSbgAoatV',
+    url='https://quantisnetwork.org/proposal7',
+    payment_address='QTC62huR4YQEPn9AJHjnQxxreHSbgAoatV',
     payment_amount=39.23,
     start_epoch=1483250400,
     end_epoch=1491022800,
