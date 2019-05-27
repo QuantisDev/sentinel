@@ -53,7 +53,7 @@ With all tests passing and crontab setup, Sentinel will stay in sync with energi
 
 ## Configuration
 
-An alternative (non-default) path to the `energi.conf` file can be specified in `sentinel.conf`:
+An alternative (non-default) path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
 
     quantisnet_conf=/path/to/quantisnet.conf
 
