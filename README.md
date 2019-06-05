@@ -2,7 +2,7 @@
 
 An all-powerful toolset for QuantisNet.
 
-Sentinel is an autonomous agent for persisting, processing and automating Quantis Network governance objects and tasks, and for expanded functions in the upcoming Energi V13 release (Evolution).
+Sentinel is an autonomous agent for persisting, processing and automating Quantis Network governance objects and tasks.
 
 Sentinel is implemented as a Python application that binds to a local version 2.1.2 quantisnetd instance on each QuantisNet v2.1.2 masternode.
 
