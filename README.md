@@ -20,6 +20,7 @@ Update system packages and ensure virtualenv is installed:
 
     $ sudo apt-get update
     $ sudo apt-get -y install python-virtualenv
+    $ sudo apt-get install virtualenv
 
 Make sure the local QuantisNet daemon running is at least version 20.102 (2010200)
 
@@ -53,7 +54,7 @@ With all tests passing and crontab setup, Sentinel will stay in sync with energi
 
 ## Configuration
 
-An alternative (non-default) path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
+Path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
 
     quantisnet_conf=/path/to/quantisnet.conf
 
