@@ -2,7 +2,7 @@
 
 An all-powerful toolset for QuantisNet.
 
-Sentinel is an autonomous agent for persisting, processing and automating Energi V12.1 governance objects and tasks, and for expanded functions in the upcoming Energi V13 release (Evolution).
+Sentinel is an autonomous agent for persisting, processing and automating Quantis Network governance objects and tasks.
 
 Sentinel is implemented as a Python application that binds to a local version 2.1.2 quantisnetd instance on each QuantisNet v2.1.2 masternode.
 
@@ -20,6 +20,7 @@ Update system packages and ensure virtualenv is installed:
 
     $ sudo apt-get update
     $ sudo apt-get -y install python-virtualenv
+    $ sudo apt-get install virtualenv
 
 Make sure the local QuantisNet daemon running is at least version 20.102 (2010200)
 
@@ -29,7 +30,7 @@ Make sure the local QuantisNet daemon running is at least version 20.102 (201020
 
 Clone the Sentinel repo and install Python dependencies.
 
-    $ git clone https://github.com/LlamaOnDrugs/sentinel.git && cd sentinel
+    $ git clone https://github.com/QuantisDev/sentinel && cd sentinel
     $ virtualenv ./venv
     $ ./venv/bin/pip install -r requirements.txt
 
@@ -53,7 +54,7 @@ With all tests passing and crontab setup, Sentinel will stay in sync with energi
 
 ## Configuration
 
-An alternative (non-default) path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
+Path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
 
     quantisnet_conf=/path/to/quantisnet.conf
 
