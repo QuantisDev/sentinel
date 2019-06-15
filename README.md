@@ -8,7 +8,7 @@ Sentinel is implemented as a Python application that binds to a local version 2.
 
 This guide covers installing Sentinel onto an existing v2.1.2 Masternode in Ubuntu 14.04 / 16.04.
 
-## Installation
+## Installation - Linux
 
 ### 1. Install Prerequisites
 
@@ -57,12 +57,47 @@ With all tests passing and crontab setup, Sentinel will stay in sync with energi
 Path to the `quantisnet.conf` file can be specified in `sentinel.conf`:
 
     quantisnet_conf=/path/to/quantisnet.conf
-
+    
 ## Troubleshooting
 
 To view debug output, set the `SENTINEL_DEBUG` environment variable to anything non-zero, then run the script manually:
 
     $ SENTINEL_DEBUG=1 ./venv/bin/python bin/sentinel.py
+
+-----------------------------------------------------------------------------------------------------
+
+
+## Installation - Windows
+
+### 1. Downloading
+
+Download [quansentinel.zip] located in this release, and extract the contents to a folder on your PC.
+
+### 2. Configuration
+
+Open sentinel.conf and adjust the line:
+
+quantisnet_conf=C:\Users\YOURUSERNAME\AppData\Roaming\QuantisNetCore\quantisnet.conf
+
+To point to your QuantisNetCore directory.
+
+### 3. Check Wallet Config
+
+Open quantisnet.conf and make sure it has at least:
+
+rpcpassword=somepass
+server=1
+rpcport=13332
+rpcconnect=127.0.0.1
+
+Restart QuantisNet-QT and wait for it to sync.
+
+### 4. Running
+
+Run quansentinel
+
+Press 1.
+
 
 ### License
 
